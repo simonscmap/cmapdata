@@ -99,6 +99,8 @@ def validator_to_vault(filename, branch, tableName, data_missing_flag):
         validator_file = final_file[0]
     ## This won't continue if there's nothing in the final_file list
     else:
+        print(f"Looking in the final folde: {vs.app_data}{base_filename}/final/")
+        print(f"Found these files in the final folders:\n{final_file}")
         contYN = input(f"Multiple files in final folder. Do you want to ingest: {final_file[0]}? " + " ?  [yes/no]: ")
         if contYN.lower() == "yes":
             validator_file = final_file[0]

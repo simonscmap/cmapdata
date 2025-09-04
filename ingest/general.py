@@ -233,7 +233,7 @@ def insertData(data_dict, tableName, server):
 
 
 def insertMetadata_no_data(
-    data_dict, tableName, DOI_link_append, DOI_download_link, DOI_download_file, DOI_CMAP_template, icon_filename, server, db_name, process_level, data_server, branch, depth_flag
+    data_dict, tableName, DOI_link_append, DOI_download_link, DOI_download_file, DOI_CMAP_template, icon_filename, server, db_name, process_level, data_server, branch, depth_flag, programs
 ):
     """Main argparse wrapper function for inserting metadata for large datasets that do not have a single data sheet (ex. ARGO, sat etc.)
 
@@ -288,6 +288,10 @@ def insertMetadata_no_data(
             db_name,
             server,
         )
+
+        metadata.tblDataset_Programs_Insert(data_dict["dataset_metadata_df"], server, db_name, programs)
+
+
         ## region id 114 is global
         metadata.ocean_region_insert(
             ["114"], data_dict["dataset_metadata_df"]["dataset_short_name"].iloc[0], db_name, server
@@ -442,6 +446,9 @@ def full_ingestion(args):
         data_dict, args.tableName, args.DOI_link_append, args.DOI_download_link, args.DOI_download_file, args.DOI_CMAP_template, args.icon_filename, args.Server, args.Database, args.process_level, args.branch
     )
     insert_small_stats(data_dict, args.tableName, args.Database, args.Server)
+    
+    metadata.tblDataset_Programs_Insert(data_dict["dataset_metadata_df"], args.Server, args.Database, args.Programs)
+
     if args.Server.lower() == "rainier":
         addAllServers(args.tableName)
         if args.icon_filename =="":
@@ -466,7 +473,7 @@ def dataless_ingestion(args):
         args.branch, args.tableName, args.process_level, import_data=False
     )
     org_check_passed = insertMetadata_no_data(
-        data_dict, args.tableName, args.DOI_link_append, args.DOI_download_link, args.DOI_download_file, args.DOI_CMAP_template, args.icon_filename, args.Server, args.Database, args.process_level, args.data_server, args.branch, args.depth_flag
+        data_dict, args.tableName, args.DOI_link_append, args.DOI_download_link, args.DOI_download_file, args.DOI_CMAP_template, args.icon_filename, args.Server, args.Database, args.process_level, args.data_server, args.branch, args.depth_flag, args.Programs
     )
     if args.Server.lower() == "rainier":
         if len(args.data_server) > 0:
@@ -508,6 +515,9 @@ def dataless_ingestion(args):
         insert_stats_manual(min_time, max_time,min_lat,max_lat,min_lon,max_lon,min_depth,max_depth,row_count,args.tableName,args.Database,args.Server)
     else:
         insert_large_stats(args.tableName, args.Database, args.Server, args.data_server)
+    
+    metadata.tblDataset_Programs_Insert(data_dict["dataset_metadata_df"], args.Server, args.Database, args.Programs)
+    
     if args.Server.lower() == "rainier":
         ## Optional argument to check DOI against Rossby
         doi_c = input("Check if DOI matches? [y or n] ")
@@ -532,7 +542,7 @@ def update_metadata(args):
     )
     metadata.deleteTableMetadata(args.tableName, args.Database, args.Server)
     org_check_pass = insertMetadata_no_data(
-        data_dict, args.tableName, args.DOI_link_append, args.DOI_download_link, args.DOI_download_file, args.DOI_CMAP_template, args.icon_filename, args.Server, args.Database, args.process_level, args.data_server, args.branch, args.depth_flag
+        data_dict, args.tableName, args.DOI_link_append, args.DOI_download_link, args.DOI_download_file, args.DOI_CMAP_template, args.icon_filename, args.Server, args.Database, args.process_level, args.data_server, args.branch, args.depth_flag, args.Programs
     )
     if args.Server.lower() == "rainier":
         if len(args.data_server) > 0:
@@ -578,6 +588,9 @@ def update_metadata(args):
             insert_small_stats(None, args.tableName, args.Database, args.Server)
         else:
             insert_large_stats(args.tableName, args.Database, args.Server, args.data_server)
+    
+    metadata.tblDataset_Programs_Insert(data_dict["dataset_metadata_df"], server, db_name, args.Programs)
+    
     if args.Server.lower() == "rainier":
         ## Optional argument to check DOI against Rossby
         doi_c = input("Check if DOI matches? [y or n] ")
@@ -611,6 +624,12 @@ def main():
         help="Filename from staging area. Ex: 'SeaFlow_ScientificData_2019-09-18.csv'",
     )
     parser.add_argument("-p", "--process_level", nargs="?", default="rep")
+    parser.add_argument(
+        "-P",
+        "--Programs",
+        help="Comma-separated list of program names",
+        nargs="?",
+    )    
     parser.add_argument(
         "-d",
         "--DOI_link_append",

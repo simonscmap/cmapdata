@@ -310,6 +310,16 @@ def get_last_ID(tableName, server):
     last_ID = DB.dbRead(last_ID_qry, server)[pkey_col_name].iloc[0]
     return last_ID
 
+
+def get_program_ID(tableName, server, prog):
+    pkey_col_name = get_name_pkey(tableName, server)
+    q = f"select Program_ID from {tableName} where lower(Program_Name)=lower('{prog}')"
+    res = DB.dbRead(q, server)["Program_ID"]
+    if len(res) != 1:
+        return None   
+    return res.iloc[0] 
+
+
 def getSensorID_SensorName(sensor, db_name, server):
     """Get SensorID from input sensor name"""
     cur_str = (

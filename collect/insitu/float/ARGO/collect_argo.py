@@ -14,6 +14,7 @@ import vault_structure as vs
 # sep_2023 = 'https://www.seanoe.org/data/00311/42182/data/104707.tar.gz'
 # oct_2030 = 'https://www.seanoe.org/data/00311/42182/data/105302.tar.gz'
 # Nov2023 = 'https://www.seanoe.org/data/00311/42182/data/105924.tar.gz'
+# Feb2024 = 'https://www.seanoe.org/data/00311/42182/data/108452.tar.gz'
 
 def downloadArgo(newmonth, tar_url):
     """Download Argo tar file. Creates new vault tables based on newmonth stub
@@ -29,8 +30,11 @@ def downloadArgo(newmonth, tar_url):
     os.system(f"""wget --no-check-certificate {tar_url} -P {output_dir}""")
 
 
-    
-newmonth = 'Feb2024'
-tar_url = 'https://www.seanoe.org/data/00311/42182/data/108452.tar.gz'
+# https://github.com/simonscmap/cmapdata/blob/main/docs/data_ingestion/gallery_examples/outside_large_dataset_walkthrough.rst
+# Argo GDAC:  https://www.seanoe.org/data/00311/42182/
+
+
+newmonth = 'Jun2024'
+tar_url = 'https://www.seanoe.org/data/00311/42182/data/110912.tar.gz'
     
 downloadArgo(newmonth, tar_url)

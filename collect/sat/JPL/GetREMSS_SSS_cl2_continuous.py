@@ -11,10 +11,10 @@ import DB
 import metadata
 import api_checks as api
 
-tbl = 'tblSSS_NRT_cl1'
+tbl = 'tblSSS_NRT_cl2'
 base_folder = f'{vs.satellite}{tbl}/raw/'
 
-## https://data.remss.com/smap/SSS/V04.0/FINAL/L3/8day_running/2022/RSS_smap_SSS_L3_8day_running_2022_001_FNL_v04.0.nc
+
 
 def getMaxDate(tbl):
     ## Check tblIngestion_Queue for downloaded but not ingested
@@ -47,13 +47,13 @@ def get_SSS(date, retry=False):
     yr = date.year
     dayn = format(date, "%j")
     dayn_str = dayn.zfill(3)
-    file_url = f'https://data.remss.com/smap/SSS/V05.0/FINAL/L3/8day_running/{yr}/RSS_smap_SSS_L3_8day_running_{yr}_{dayn_str}_FNL_V05.0.nc'
-    save_path = f'{vs.satellite + tbl}/raw/RSS_smap_SSS_L3_8day_running_{yr}_{dayn_str}_FNL_V05.0.nc'
+    file_url = f'https://data.remss.com/smap/SSS/V06.0/FINAL/L3/8day_running/{yr}/RSS_smap_SSS_L3_8day_running_{yr}_{dayn_str}_FNL_V06.0.nc'
+    save_path = f'{vs.satellite + tbl}/raw/RSS_smap_SSS_L3_8day_running_{yr}_{dayn_str}_FNL_V06.0.nc'
     wget_str = f'wget --no-check-certificate "{file_url}" -O "{save_path}"'  
     try:
         os.system(wget_str)
         Error_Date = date.strftime('%Y_%m_%d')         
-        Original_Name = f'RSS_smap_SSS_L3_8day_running_{yr}_{dayn_str}_FNL_V05.0.nc'
+        Original_Name = f'RSS_smap_SSS_L3_8day_running_{yr}_{dayn_str}_FNL_V06.0.nc'
             ## Remove empty downloads
         if os.path.getsize(save_path) == 0:
             print(f'empty download for {Error_Date}')

@@ -108,7 +108,7 @@ def tblDatasets_Insert(dataset_metadata_df, tableName, icon_filename, server, db
         Variables,
         Data_Source,
         Distributor,
-        Description,
+        f"N'{Description}'",
         Climatology,
         Acknowledgement,
         Doc_URL,
@@ -201,7 +201,8 @@ def tblDataset_Vault_Insert(tableName, server, db_name, make):
     # full_vault_path = getattr(vs,make)+tableName
     full_vault_path = cmn.vault_struct_retrieval(make)+tableName
     vault_path = full_vault_path.split('vault/')[1]+'/'
-    vault_url = cmn.dropbox_public_link(full_vault_path.split('Simons CMAP')[1])
+    # vault_url = cmn.dropbox_public_link(full_vault_path.split('Simons CMAP')[1])
+    vault_url = cmn.dropbox_public_link(full_vault_path.split('cmap_dbx')[1])
     columnList = "(Dataset_ID, Vault_Path, Vault_URL)"
     qry = (Dataset_ID,vault_path,vault_url)
     DB.lineInsert(
@@ -246,6 +247,29 @@ def tblDataset_References_Insert(dataset_metadata_df, server, db_name, DOI_link_
             )  
         tblDataset_DOI_Download_Insert(Ref_ID, server, db_name, DOI_download_link, DOI_download_file, DOI_CMAP_template)     
     print("Inserting data into tblDataset_References.")
+
+
+def tblDataset_Programs_Insert(dataset_metadata_df, server, db_name, programs):
+    if not programs: return
+    Dataset_Name = dataset_metadata_df["dataset_short_name"].iloc[0]
+    Dataset_ID = cmn.getDatasetID_DS_Name(Dataset_Name, db_name, server)
+    columnList = "(Dataset_ID, Program_ID)"
+    program_list = programs.split(",")
+    for prog in program_list:
+        try:
+            if len(prog) == 0:
+                continue
+            Program_ID = cmn.get_program_ID("tblPrograms", server, prog)
+            if Program_ID:
+                query = (Dataset_ID, Program_ID)                
+                DB.lineInsert(
+                    server, db_name +".[dbo].[tblDataset_Programs]", columnList, query
+                )
+            else:
+                print("################ Program ID Issue ################")
+                print(f"No program ID found for {prog}")    
+        except Exception as e:
+            print(e) 
 
 
 def tblVariables_Insert(
@@ -457,6 +481,7 @@ def tblVariables_Insert(
         has_depth_list
     ):
         last_var_ID = cmn.get_last_ID("tblVariables", server) + 1
+
         query = (
             last_var_ID,
             Db,
@@ -811,6 +836,16 @@ def deleteFromtblDataset_Servers(Dataset_ID, db_name, server):
     DB.DB_modify(cur_str, server)
     print("tblDataset_Servers entries deleted for Dataset_ID: ", Dataset_ID)
 
+def deleteFromtblDataset_Programs(Dataset_ID, db_name, server):
+    cur_str = (
+        """DELETE FROM """
+        + db_name
+        + """.[dbo].[tblDataset_Programs] WHERE [Dataset_ID] = """ + str(
+        Dataset_ID
+    ))
+    DB.DB_modify(cur_str, server)
+    print("tblDataset_Programs entries deleted for Dataset_ID: ", Dataset_ID)
+
 
 def dropTable(tableName, server):
     cur_str = """DROP TABLE """ + tableName
@@ -818,29 +853,32 @@ def dropTable(tableName, server):
     print(tableName, " Removed from DB")
 
 
-def deleteCatalogTables(tableName, db_name, server):
+def deleteCatalogTables(tableName, db_name, servers):
     contYN = input(
         "Are you sure you want to delete all of the catalog tables and data for "
         + tableName
         + " ?  [yes/no]: "
     )
-    Dataset_ID = cmn.getDatasetID_Tbl_Name(tableName, db_name, server)
-    if contYN == "yes":
-        deleteFromtblKeywords(Dataset_ID, db_name, server)
-        deleteFromtblDataset_Stats(Dataset_ID, db_name, server)
-        deleteFromtblDataset_Cruises(Dataset_ID, db_name, server)
-        deleteFromtblDataset_Regions(Dataset_ID, db_name, server)
-        deleteFromtblDataset_DOI_Download(Dataset_ID, db_name, server)
-        deleteFromtblDataset_References(Dataset_ID, db_name, server)
-        deleteFromtblVariables_JSON_Metadata(Dataset_ID, db_name, server)         
-        deleteFromtblVariables(Dataset_ID, db_name, server)
-        deleteFromtblDataset_Servers(Dataset_ID, db_name, server)
-        deleteFromtblDataset_Vault(Dataset_ID, db_name, server)
-        deleteFromtblDatasets_JSON_Metadata(Dataset_ID, db_name, server)
-        deleteFromtblDatasets(Dataset_ID, db_name, server)
-        dropTable(tableName, server)
-    else:
-        print(f"Catalog tables for {tableName}, ID" + str(Dataset_ID) + " not deleted")
+
+    for server in servers.split(","):
+        Dataset_ID = cmn.getDatasetID_Tbl_Name(tableName, db_name, server)
+        if contYN == "yes":
+            deleteFromtblKeywords(Dataset_ID, db_name, server)
+            deleteFromtblDataset_Stats(Dataset_ID, db_name, server)
+            deleteFromtblDataset_Cruises(Dataset_ID, db_name, server)
+            deleteFromtblDataset_Regions(Dataset_ID, db_name, server)
+            deleteFromtblDataset_DOI_Download(Dataset_ID, db_name, server)
+            deleteFromtblDataset_References(Dataset_ID, db_name, server)
+            deleteFromtblVariables_JSON_Metadata(Dataset_ID, db_name, server)         
+            deleteFromtblVariables(Dataset_ID, db_name, server)
+            deleteFromtblDataset_Servers(Dataset_ID, db_name, server)
+            deleteFromtblDataset_Programs(Dataset_ID, db_name, server)
+            deleteFromtblDataset_Vault(Dataset_ID, db_name, server)
+            deleteFromtblDatasets_JSON_Metadata(Dataset_ID, db_name, server)
+            deleteFromtblDatasets(Dataset_ID, db_name, server)
+            dropTable(tableName, server)
+        else:
+            print(f"Catalog tables for {tableName}, ID" + str(Dataset_ID) + " not deleted")
 
 def deleteTableMetadata(tableName, db_name, server):
     contYN = input(

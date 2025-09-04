@@ -52,6 +52,9 @@ def cruise_leaf_structure(base):
     makedir(raw)
     return meta, traj, code, raw
 
+
+
+"""
 vault = r"/data/CMAP Data Submission Dropbox/Simons CMAP/vault/"
 staging = r"/data/CMAP Data Submission Dropbox/Simons CMAP/staging/"
 collected_data = r"/data/CMAP Data Submission Dropbox/Simons CMAP/collected_data/"
@@ -64,6 +67,24 @@ app_data = r"/data/CMAP Data Submission Dropbox/Simons CMAP/Apps/Simons CMAP Web
 
 ################# Static Mission Icon Directory ##################
 static = r"/data/CMAP Data Submission Dropbox/Simons CMAP/static/"
+mission_icons = static + r"mission_icons/"
+"""
+
+
+
+cmap_dbx = "/data/cmap_dbx"
+vault = f"{cmap_dbx}/vault/"
+staging = f"{cmap_dbx}/staging/"
+collected_data = f"{cmap_dbx}/collected_data/"
+spatial_data = f"{cmap_dbx}/spatial_data/"
+dataset_audit = f"{cmap_dbx}/dataset_audit/"
+download_transfer = f"{cmap_dbx}/download_transfer/"
+app_data = f"{cmap_dbx}/Apps/Simons CMAP Web Data Submission/"
+
+
+
+################# Static Mission Icon Directory ##################
+static = f"{cmap_dbx}/static/"
 mission_icons = static + r"mission_icons/"
 
 

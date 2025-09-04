@@ -329,6 +329,13 @@ def query(sql):
     return df
 
 def postIngestAPIChecks(server = 'Rossby'):
+    
+    #TODO: remove after once mariana is fixed
+    import sys
+    sys.exit()
+    ###########################################
+    
+
     ## Runs DB endpoint checks. Default server is Rossby
     db_name = 'Opedia'
     strandedTables()

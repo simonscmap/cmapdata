@@ -79,7 +79,8 @@ for fil in tqdm(flist):
     try:
         a = [df,df]
         b = [tbl,tbl]
-        c = ['mariana','rossby']   
+        # c = ['mariana','rossby']   
+        c = ['rossby']   
         with Pool(processes=2) as pool:
             result = pool.starmap(DB.toSQLbcp_wrapper, zip(a,b,c))
             pool.close() 

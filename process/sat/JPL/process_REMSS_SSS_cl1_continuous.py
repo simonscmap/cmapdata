@@ -77,7 +77,8 @@ for fil in tqdm(flist):
     metadata.tblIngestion_Queue_Staged_Update(path, tbl, 'Opedia', 'Rainier') 
     a = [df,df,df]
     b = [tbl,tbl,tbl]
-    c = ['mariana','rossby','rainier'] 
+    # c = ['mariana','rossby','rainier'] 
+    c = ['rossby','rainier'] 
     with Pool(processes=3) as pool:
         result = pool.starmap(DB.toSQLbcp_wrapper, zip(a,b,c))
         pool.close() 

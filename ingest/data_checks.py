@@ -56,7 +56,7 @@ def check_df_values(df):
     i = 0
     ## Check data values
     for d in df.columns:
-        if d not in ['lat','lon','depth'] and df[d].dtype != 'O' and 'datetime' not in df[d].dtype.name:
+        if d not in ['lat','lon','depth'] and df[d].dtype != 'O' and df[d].dtype != 'bool' and 'datetime' not in df[d].dtype.name:
             std = df.describe()[d]['std']
             mn = df.describe()[d]['min']
             mx = df.describe()[d]['max']

@@ -85,7 +85,8 @@ for fil in tqdm(flist):
     ## Also add to on prem servers
     a = [df_import,df_import,df_import]
     b = [tbl,tbl,tbl]
-    c = ['mariana','rossby','rainier']
+    # c = ['mariana','rossby','rainier']
+    c = ['rossby','rainier']
     with Pool(processes=3) as pool:
         result = pool.starmap(DB.toSQLbcp_wrapper, zip(a,b,c))
         pool.close() 

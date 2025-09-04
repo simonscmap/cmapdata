@@ -87,7 +87,7 @@ def updateStats_Manual(dt1, dt2, lat1, lat2, lon1, lon2, dpt1, dpt2, row_count, 
         tableName (str): CMAP table name
         db_name (str): CMAP database name (Opedia)
         Server (str): Valid CMAP server name
-    """
+    """   
     Dataset_ID = cmn.getDatasetID_Tbl_Name(tableName, db_name, server)
     var_df = DB.dbRead(f"SELECT Short_Name FROM tblVariables WHERE Dataset_ID = {Dataset_ID}", server)
     stats_df = pd.DataFrame(index=['count', 'mean', 'std', 'min', '25%', '50%', '75%', 'max'])

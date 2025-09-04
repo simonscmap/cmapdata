@@ -1,3 +1,4 @@
+
 """
 Author: Norland Raphael Hagen <norlandrhagen@gmail.com>
 Date: 07-23-2021
@@ -11,7 +12,13 @@ import os
 sys.path.append("../../ingest") 
 
 import credentials as cr
+import math
+import json
 import pyodbc
+import re
+import numpy as np
+import pandas as pd
+from datetime import datetime, date
 import sqlalchemy
 import urllib
 import pandas.io.sql as sql
@@ -181,30 +188,126 @@ def addStudyDomain(server, study):
     conn.commit()    
 
 
-def lineInsert(server, tableName, columnList, query, ID_insert=False):
-    """Single line insert functionallity
+# def lineInsert(server, tableName, columnList, query, ID_insert=False):
+#     """Single line insert functionallity
+
+#     Args:
+#         server (str): Valid CMAP server name. ex Rainier
+#         tableName (str): Valid CMAP table name
+#         columnList (list): list of columns in table
+#         query (str): sql query values
+#         ID_insert (bool, optional): Identity_insert. Defaults to False.
+#     """
+#     insertQuery = """INSERT INTO {} {} VALUES {} """.format(
+#         tableName, columnList, query
+#     )
+#     insertQuery = insertQuery.replace("'NULL'", "NULL")
+#     insertQuery = insertQuery.replace("CHAR(39)", "''")
+#     insertQuery = insertQuery.replace(r""""N'""", r"""N'""")
+#     insertQuery = insertQuery.replace(r"""'",""", r"""',""")
+#     if ID_insert == True:
+#         insertQuery = (
+#             f"""SET IDENTITY_INSERT {tableName} ON """
+#             + insertQuery
+#             + f""" SET IDENTITY_INSERT {tableName} OFF """
+#         )
+#     conn, cursor = dbConnect(server)
+#     cursor.execute(insertQuery)
+#     conn.commit()
+
+
+
+_NULL_STRINGS = {"", "null", "none", "nan", "na"}
+_BOOL_STRINGS = {"true": True, "false": False} 
+
+
+def _to_sql_param(x):
+    # pandas/NumPy missing -> None
+    try:
+        if pd.isna(x):
+            return None
+    except Exception:
+        pass
+
+    if isinstance(x, str):
+        s = x.strip()
+        ls = s.lower()
+        if ls in _NULL_STRINGS:
+            return None
+        if ls in _BOOL_STRINGS:
+            return _BOOL_STRINGS[ls]
+        return s   # keep as NVARCHAR; driver will escape quotes/newlines
+
+    if isinstance(x, np.generic):
+        x = x.item()
+
+    if isinstance(x, np.integer):
+        return int(x)
+    if isinstance(x, np.floating):
+        v = float(x)
+        if math.isnan(v) or math.isinf(v):
+            return None
+        return v
+    if isinstance(x, np.bool_):
+        return bool(x)
+
+    if isinstance(x, np.datetime64):
+        return pd.Timestamp(x).to_pydatetime()
+    if isinstance(x, pd.Timestamp):
+        return None if x is pd.NaT else x.to_pydatetime()
+
+    if isinstance(x, (list, dict, tuple)):
+        return json.dumps(x)
+
+    return x
+
+
+def lineInsert(server, tableName, columnList, values, ID_insert=False):
+    """
+    Single-row INSERT using parameterized query.
 
     Args:
-        server (str): Valid CMAP server name. ex Rainier
-        tableName (str): Valid CMAP table name
-        columnList (list): list of columns in table
-        query (str): sql query values
-        ID_insert (bool, optional): Identity_insert. Defaults to False.
+        server (str): CMAP server name (used by dbConnect)
+        tableName (str): e.g., "[dbo].[tblDatasets]" or "Opedia.[dbo].[tblDatasets]"
+        columnList (list|tuple|str): column names OR a "(col1,col2,...)" string
+        values (sequence): Python values aligned with columns
+        ID_insert (bool): toggle SET IDENTITY_INSERT table ON/OFF
     """
-    insertQuery = """INSERT INTO {} {} VALUES {} """.format(
-        tableName, columnList, query
-    )
-    insertQuery = insertQuery.replace("'NULL'", "NULL")
-    insertQuery = insertQuery.replace("CHAR(39)", "''")
-    if ID_insert == True:
-        insertQuery = (
-            f"""SET IDENTITY_INSERT {tableName} ON """
-            + insertQuery
-            + f""" SET IDENTITY_INSERT {tableName} OFF """
-        )
+    if isinstance(columnList, (list, tuple)):
+        columns_txt = "(" + ",".join(columnList) + ")"
+    else:
+        columns_txt = columnList  # assume "(col1, col2, ...)"
+
+    placeholders = "(" + ",".join(["?"] * len(values)) + ")"
+    sql = f"INSERT INTO {tableName} {columns_txt} VALUES {placeholders};"
+
+    clean_values = tuple(_to_sql_param(v) for v in values)
+
     conn, cursor = dbConnect(server)
-    cursor.execute(insertQuery)
-    conn.commit()
+    try:
+        if ID_insert:
+            cursor.execute(f"SET IDENTITY_INSERT {tableName} ON;")
+        cursor.execute(sql, clean_values)
+        conn.commit()
+    except pyodbc.Error:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        # print(sql)
+        # print(clean_values)
+        # print([type(v) for v in clean_values])
+        raise
+    finally:
+        if ID_insert:
+            try:
+                cursor.execute(f"SET IDENTITY_INSERT {tableName} OFF;")
+                conn.commit()
+            except Exception:
+                pass
+        cursor.close()
+        conn.close()
+
 
 def queryExecute(server, query):
     """Execute query directly in SQL, not through pycmap query functionality: DB_query(query)

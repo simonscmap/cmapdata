@@ -24,6 +24,8 @@ import api_checks as api
 import common as cmn
 import DB
 
+
+
 ## Flag to run script
 run_script = True
 
@@ -68,6 +70,10 @@ proc_alt_nrt = '/process/sat/CMEMS/process_CMEMS_Alitmetry_NRT_Signal_continuous
 proc_alt_rep = '/process/sat/CMEMS/process_CMEMS_Alitmetry_REP_Signal_continuous.py'
 process_aod = '/process/sat/NASA/process_LAADS_MODIS_AOD_continuous.py'
 
+# import sys
+# stats.updateStats_Manual("1928-07-24T17:00:00.000Z", "2016-08-22T04:50:00.000Z", -66.3667,	-7.967,	89.6289,	174.335,	0,	3300, 1988337, 'tblAustralian_Phytoplankton_Database', 'Opedia', 'mariana') 
+# sys.exit()
+
 def runScript(pth):
     """Run scripts in other directories."""
     os.system(f"python {cur_dir+pth}")
@@ -86,20 +92,23 @@ def updateCIStats(tbl):
 if run_script:
     if datetime.date.today().weekday() == 2:
         print("It's Wednesday!")
-        wlist = [get_pisces_nut, get_pisces_bio, get_pisces_car, get_pisces_optics, get_pisces_pft, get_pisces_co2, get_wind, get_sst, get_sss, get_par_nrt, get_par,get_alt_nrt,get_alt_rep]                         
+        # wlist = [get_pisces_nut, get_pisces_bio, get_pisces_car, get_pisces_optics, get_pisces_pft, get_pisces_co2, get_wind, get_sst, get_sss, get_par_nrt, get_par,get_alt_nrt,get_alt_rep]                         
+        wlist = [get_pisces_nut, get_pisces_bio, get_pisces_car, get_pisces_optics, get_pisces_pft, get_pisces_co2, get_sst, get_par_nrt, get_par,get_alt_nrt,get_alt_rep, get_aod]  # removed get_sss, get_wind                         
         with Pool(processes=8) as pool:
             pool.map(runScript,  wlist)
             pool.close() 
             pool.join()
     elif datetime.date.today().weekday() == 1:
         print("It's Tuesday!")
-        dtlist = [get_chl_nrt, get_chl, get_poc_nrt, get_poc, get_wind, get_sst, get_sss, get_par_nrt, get_par, get_alt_nrt]  
+        # dtlist = [get_chl_nrt, get_chl, get_poc_nrt, get_poc, get_wind, get_sst, get_sss, get_par_nrt, get_par, get_alt_nrt]
+        dtlist = [get_chl_nrt, get_chl, get_poc_nrt, get_poc, get_sst, get_par_nrt, get_par, get_alt_nrt, get_aod]  # removed get_sss, get_wind
         with Pool(processes=14) as pool:
             pool.map(runScript,  dtlist)
             pool.close() 
             pool.join()
     else:
-        dlist = [get_wind, get_sst, get_sss, get_par_nrt, get_par, get_alt_nrt]
+        # dlist = [get_wind, get_sst, get_sss, get_par_nrt, get_par, get_alt_nrt]
+        dlist = [get_sst, get_par_nrt, get_par, get_alt_nrt, get_aod]  # removed get_sss, get_wind
         with Pool(processes=8) as pool:
             pool.map(runScript,  dlist)
             pool.close() 
@@ -107,25 +116,28 @@ if run_script:
     dl_count = DB.dbRead("SELECT table_name, count(*) cnt from tblProcess_Queue where Processed is null and error_str is null group by table_name order by table_name","Rainier")
     print(dl_count)
     
-    Yn = input("Continue with data processing? [y/n] ")
+    # Yn = input("Continue with data  processing? [y/n] ")
     Yn= 'y'
     
     if Yn == 'y':
         if datetime.date.today().weekday() == 2:
             print("It's Wednesday!")
-            plist = [proc_pisces_nut, proc_pisces_bio, proc_pisces_car, proc_pisces_optics, proc_pisces_pft, proc_pisces_co2, proc_wind, proc_sst, proc_sss, proc_par_nrt, proc_par, proc_alt_nrt, proc_alt_rep]                                                             
+            # plist = [proc_pisces_nut, proc_pisces_bio, proc_pisces_car, proc_pisces_optics, proc_pisces_pft, proc_pisces_co2, proc_wind, proc_sst, proc_sss, proc_par_nrt, proc_par, proc_alt_nrt, proc_alt_rep]                                                             
+            plist = [proc_pisces_nut, proc_pisces_bio, proc_pisces_car, proc_pisces_optics, proc_pisces_pft, proc_pisces_co2, proc_sst, proc_par_nrt, proc_par, proc_alt_nrt, proc_alt_rep, process_aod]  # removed proc_sss, proc_wind
             with Pool(processes=20) as pool:
                 pool.map(runScript,  plist)
                 pool.close() 
                 pool.join()
         elif datetime.date.today().weekday() == 1:  
-            snlist = [proc_wind, proc_sst, proc_sss, proc_par_nrt, proc_par, proc_alt_nrt, proc_chl_nrt, proc_chl, proc_poc_nrt, proc_poc]
+            # snlist = [proc_wind, proc_sst, proc_sss, proc_par_nrt, proc_par, proc_alt_nrt, proc_chl_nrt, proc_chl, proc_poc_nrt, proc_poc]
+            snlist = [proc_sst, proc_par_nrt, proc_par, proc_alt_nrt, proc_chl_nrt, proc_chl, proc_poc_nrt, proc_poc, process_aod]  # removed proc_sss, proc_wind
             with Pool(processes=8) as pool:
                 pool.map(runScript,  snlist)
                 pool.close() 
                 pool.join()
         else:
-            plist = [proc_wind, proc_sst, proc_sss, proc_par_nrt, proc_par, proc_alt_nrt]
+            # plist = [proc_wind, proc_sst, proc_sss, proc_par_nrt, proc_par, proc_alt_nrt]
+            plist = [proc_sst, proc_par_nrt, proc_par, proc_alt_nrt, process_aod]  # removed proc_sss, proc_wind         
             with Pool(processes=20) as pool:
                 pool.map(runScript,  plist)
                 pool.close() 
@@ -173,11 +185,12 @@ if run_script:
         elif datetime.date.today().weekday() == 1:  
             tlist = ['tblsss_nrt_cl1','tblSST_AVHRR_OI_NRT','tblModis_chl_cl1','tblModis_chl_nrt','tblModis_par_cl1','tblModis_par_nrt','tblModis_poc_cl1','tblModis_poc_nrt','tblAltimetry_NRT_Signal']
         else:
-            tlist = ['tblsss_nrt_cl1','tblSST_AVHRR_OI_NRT','tblModis_par_cl1','tblModis_par_nrt','tblAltimetry_NRT_Signal'] 
+            tlist = ['tblsss_nrt_cl1','tblSST_AVHRR_OI_NRT','tblModis_par_cl1','tblModis_par_nrt','tblAltimetry_NRT_Signal', 'tblModis_AOD_REP'] 
         for tbl in tlist:
             updateCIStats(tbl)
     else:
         print("### Check tblIngestion_Queue ###")
+    print(f"Ingestion finished at {datetime.datetime.now()}")
 
 
 

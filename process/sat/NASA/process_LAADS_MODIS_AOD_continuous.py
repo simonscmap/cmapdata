@@ -90,15 +90,16 @@ for f in tqdm(flist):
     df = pd.DataFrame({'lat': lat.ravel(), 'lon': lon.ravel(), 'aod': data_scaled.ravel()})
     ## using .date() makes time an object instead of datetime
     df['time'] =pd.to_datetime(file_date, format = '%Y%j')
-    df["year"] = pd.to_datetime(df["time"]).dt.year
-    df["month"] = pd.to_datetime(df["time"]).dt.month
+    df['time'] = df['time'].astype('datetime64[us]')
+    df["year"] = pd.to_datetime(df["time"]).dt.year.astype(int)
+    df["month"] = pd.to_datetime(df["time"]).dt.month.astype(int)
     df["week"] = pd.to_datetime(df["time"]).dt.isocalendar().week.astype(int)
-    df["dayofyear"] = pd.to_datetime(df["time"]).dt.dayofyear
+    df["dayofyear"] = pd.to_datetime(df["time"]).dt.dayofyear.astype(int)
     df = df.sort_values(['time','lat','lon'],ascending=[True] * 3)
     df = df[['lat','lon','time','aod','year','month','week','dayofyear']]
-    df.rename(columns={'aod':'AOD'}, inplace=True)    
+    df.rename(columns={'aod':'AOD'}, inplace=True)
     if df.dtypes.to_dict() != test_dtype:
-        print(f"Check data types in {f}. New: {df.columns.to_list()}")
+        print(f"Check data types in {f}. New: {df.columns.to_list()}")        
         sys.exit()   
     df.to_parquet(f"{rep_folder}{tbl}_{check_date.strftime('%Y-%m-%d').replace('-','_')}.parquet",index=False)
     path = f"{rep_folder.split('vault/')[1]}{tbl}_{check_date.strftime('%Y-%m-%d').replace('-','_')}.parquet"
